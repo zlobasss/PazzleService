@@ -33,6 +33,14 @@ public class PuzzleSolver {
         return Collections.emptyList(); // Если решения нет
     }
 
+    public boolean isSolvable(int[] startState) {
+        List<Integer> tiles = new ArrayList<>();
+        for (int i = 0; i < startState.length; i++) {
+            tiles.add(startState[i]);
+        }
+        return PuzzleState.isSolvable(tiles);
+    }
+
     private List<String> constructSolution(PuzzleState state) {
         List<String> solution = new ArrayList<>();
         while (state != null) {

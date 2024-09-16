@@ -2,13 +2,12 @@ package ru.zlobass.pazzleservice.entity;
 
 import lombok.Getter;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Getter
 public class PuzzleState {
 
+    private static final int SIZE = 4;
     private int[] board;
     private int zeroIndex; // Индекс пустой плитки (0)
     private int moves;
@@ -20,6 +19,29 @@ public class PuzzleState {
         this.board = Arrays.copyOf(board, board.length);
         this.moves = moves;
         this.previousState = previousState;
+        this.zeroIndex = findZeroIndex(board);
+    }
+
+    public PuzzleState() {
+        this.board = new int[SIZE * SIZE];
+        List<Integer> tiles = new ArrayList<>();
+
+        // Заполнение списка цифрами от 0 до 15 (0 - это пустая клетка)
+        for (int i = 0; i < SIZE * SIZE; i++) {
+            tiles.add(i);
+        }
+
+        // Перемешивание фишек до тех пор, пока комбинация не станет решаемой
+        do {
+            Collections.shuffle(tiles);
+        } while (!isSolvable(tiles));
+
+        for (int i = 0; i < SIZE * SIZE; i++) {
+            this.board[i] = tiles.get(i);
+        }
+
+        this.moves = 0;
+        this.previousState = null;
         this.zeroIndex = findZeroIndex(board);
     }
 
@@ -134,6 +156,62 @@ public class PuzzleState {
             }
         }
         return Arrays.copyOf(neighbors, index);
+    }
+
+    public static boolean isSolvable(List<Integer> tiles) {
+
+        int inversions = countInversions(tiles);
+        int emptyRow = findEmptyRow(tiles); // Ряд, в котором находится пустая клетка (нумерация снизу)
+
+        // Если размер поля нечётный, то количество инверсий должно быть чётным
+        // Если размер поля чётный, то комбинация решаема, если:
+        // - пустая клетка в чётной строке снизу и количество инверсий нечётное
+        // - пустая клетка в нечётной строке снизу и количество инверсий чётное
+        if (SIZE % 2 == 1) {
+            return inversions % 2 == 0;
+        } else {
+            return (emptyRow % 2 == 1) == (inversions % 2 == 0);
+        }
+    }
+
+    // Подсчёт количества инверсий в списке
+    private static int countInversions(List<Integer> tiles) {
+        int inversions = 0;
+        for (int i = 0; i < tiles.size(); i++) {
+            for (int j = i + 1; j < tiles.size(); j++) {
+                if (tiles.get(i) != 0 && tiles.get(j) != 0 && tiles.get(i) > tiles.get(j)) {
+                    inversions++;
+                }
+            }
+        }
+        return inversions;
+    }
+
+    // Поиск строки с пустой клеткой (считая снизу)
+    private static int findEmptyRow(List<Integer> tiles) {
+        int index = tiles.indexOf(0);  // Индекс пустой клетки (0)
+        return SIZE - (index / SIZE);  // Ряд пустой клетки (считая снизу)
+    }
+
+    private List<Integer> getListBoard() {
+        List<Integer> list = new ArrayList<>();
+        for (int i = 0; i < SIZE; i++) {
+            for (int j = 0; j < SIZE; j++) {
+                list.add(board[i * SIZE + j]);
+            }
+        }
+        return list;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < SIZE; i++) {
+            for (int j = 0; j < SIZE; j++) {
+                result.append(board[i * SIZE + j]).append(" ");
+            }
+        }
+        return result.toString();
     }
 
     @Override
